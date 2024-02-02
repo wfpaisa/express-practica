@@ -26,6 +26,7 @@ router.get("/", (req, res) => {
     if (err) {
       return next(err);
     }
+    // console.log("RESULTS: ->", results);
     return res.json(results);
   });
 });
@@ -42,14 +43,30 @@ router.get("/filter/:nombre", (req, res, next) => {
     }
 
     if (results && results.length > 0) {
+      // res.json(results);
       return res.json(results);
     } else {
+      // res.status(404).json({
+      //   message: "Product not found",
+      // });
       return res.status(404).json({
         message: `Nombres con esta coincidenia: (${nombre}) no encontrados`,
       });
     }
   });
 });
+
+// router.get("/:id", (req, res, next) => {
+//   const id = req.params.id;
+//   const query = `SELECT * FROM users WHERE id IN (${id})`;
+
+//   connection.query(query, (err, results) => {
+//     if (err) throw err;
+
+//     res.json(results);
+//     next();
+//   });
+// });
 
 router.get("/:id", (req, res, next) => {
   const id = req.params.id;
@@ -61,13 +78,31 @@ router.get("/:id", (req, res, next) => {
       return next(err);
     }
 
+    // console.log(Array.isArray(results));
+
+    // if (results) {
+    // if (results.length > 0) {
+    // if (Object.keys(results).length > 0) {
     if (results && results?.length) {
       // res.json(results);
       return res.json(results);
     } else {
+      // res.status(404).json({
+      //   message: "Product not found",
+      // });
+      // return res.status(404).json({
+      //   message: `usuario con ${id} not found`,
+      // });
     }
   });
 });
+
+// // FORMA EN LOCAL
+// router.get("/:id", (req, res) => {
+//   const id = req.params.id;
+//   const user = users.filter((user) => user.id === id);
+//   res.json(user);
+// });
 
 router.post("/", (req, res) => {
   const user = {
@@ -107,60 +142,62 @@ router.post("/", (req, res) => {
 
 router.put("/:id", (req, res) => {
   const { id } = req.params;
-  const user = {
-    id: uuid.v4(),
-    nombre: req.body.nombre,
-    apellido: req.body.apellido,
-    edad: req.body.edad,
-    gustaHamburguesas: req.body.gustaHamburguesas,
-    fechaEditado: new Date(),
-  };
+  const body = req.body;
 
-  const query = `UPDATE users SET id = ?, nombre = ?, apellido = ?, edad = ?, gustaHamburguesas = ?, fechaEditado = ? WHERE id = ?`;
+  users = users.map((user) => {
+    if (user.id === id) {
+      // ? FORMA 1
+      // return {
+      //   ...user,
+      //   nombre: body.nombre,
+      //   apellido: body.apellido,
+      //   edad: body.edad,
+      //   gustaHamburguesas: body.gustaHamburguesas,
+      //   fechaEditado: new Date().toISOString(),
+      // };
 
-  connection.query(
-    query,
-    [
-      user.id,
-      user.nombre,
-      user.apellido,
-      user.edad,
-      user.gustaHamburguesas,
-      user.fechaEditado,
-      id,
-    ],
-    (err, result) => {
-      if (err) {
-        console.error(err);
-        res.status(500).send("Error al actualizar usuario en la base de datos");
-      } else {
-        console.log("Usuario actualizado correctamente en la base de datos");
-        res.json(user);
-      }
+      // ? FORMA 2
+      let updateUser = {
+        ...user,
+      };
+      updateUser.nombre = body.nombre;
+      updateUser.apellido = body.apellido;
+      updateUser.edad = body.edad;
+      updateUser.gustaHamburguesas = body.gustaHamburguesas;
+      updateUser.fechaEditado = new Date().toISOString();
+      return updateUser;
     }
-  );
+    return user;
+  });
+
+  // console.log("holasadasd : ", users);
+
+  res.json({
+    message: `update product with id ${id}`,
+    data: {
+      id,
+      ...body,
+    },
+  });
 });
 
 router.delete("/:id", (req, res) => {
-  const { id } = req.params; // // FORMA EN LOCAL
-  // router.get("/:id", (req, res) => {
-  //   const id = req.params.id;
-  //   const user = users.filter((user) => user.id === id);
-  //   res.json(user);
-  // });
+  const { id } = req.params;
 
-  connection.query(query, [id], (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send("Error al eliminar usuario de la base de datos");
-    } else {
-      if (result.affectedRows > 0) {
-        console.log("Usuario eliminado correctamente de la base de datos");
-        res.status(204).send();
-      } else {
-        res.status(404).send("Usuario no encontrado");
-      }
-    }
+  // ?FORMA 1
+  // users = users.filter((user) => {
+  //   if (user.id !== id) {
+  //     return true;
+  //   }
+  //   return false;
+  // });
+  // ?FORMA 1 COMPRIMIDA
+  users = users.filter((user) => user.id !== id);
+
+  // console.log("holasadasd : ", users);
+
+  res.json({
+    mesage: `Deleted product with id ${id}`,
   });
 });
 
